@@ -1,0 +1,170 @@
+\documentclass{jsarticle}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+
+\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmax}{argmax}
+
+\title{ART.T458 Advanced Machine Learning Midterm Assignment
+(Final report assigned by Shimosaka)}
+
+\author{Masamichi Shimosaka
+Department of Computer Science Tokyo Institute of Technology}
+
+\begin{document}
+\maketitle
+\section*{Introduction}
+\begin{itemize}
+  \item Choose the problems from your preference and solve the chosen problems.
+  \item UseTex/MSword.
+  \item Submit the A4 sized / letter sized report (pdf format file) by 30th 17:00 July 2021 via t2schola.
+  \item The maximum points you can earn in each problem is shown in each section title.
+  \item Let $s_i \ge 0$ be the score you earned in i-th problem, the final score q used in the evaluation
+is processed by
+$$q = \min(30,\Sigma_i s_i)$$
+  \item In addition to the above q pts, you could also earn 2 pts (that is independent of q), if you show which topics of machine learning you want to take in the 1st half of this course as well as linear models, sparse learning, optimization, and the contents of 2nd half (deep learning). I hope to take some keywords of your preference such as ensemble models such as boosting with decision or regression tress and bagging, Bayesian methods such as nonparametric Bayes, Markov chain Monte Carlo techniques, and variational Bayes, sequence modeling such as Kalman filters, Markov models, and CRFs, some application perspective issues such as recommender systems (learning to ranking, factorization machines), numerical optimization such as interior point algorithms, augmented Lagrangian, ADMM, sequential quadratic programming, and so on. Please do not refer current contents of 1st and 2nd half lectures. If you find some typos / mistakes in the slides, your suggestion x 回目の講義の スライド y ページ目の z の式に誤りがあり，w のように修正すべきです can be added as this bonus 2 pts. Personally, suggestions to improve the quality of the course, of course, are welcome.
+  \item You do not need to include the source code of your implementation in your report. How- ever, you are welcome to show the URL of your codes via github or some other publicly available repository services.
+  \item IMPORTANT: In this report, you are not allowed to use high level machine learning li- braries, such as SciPy, scikit-learn, (Py)-Torch, Tensor Flow, and Neural network toolbox in Matlab, but are allowed to use basic linear algebra libraries such as NumPy, and basic Matlab language functionalities. It should be noted that the main objective of this report is to understand mathematical perspective of ML with implementations instead of how to use (black box) ML libraries.
+  \item You can use Japanese as well as English.
+  \item Some reference code in Jupyter notebook in https://bit.ly/32gbpRt might be helpful to promote this assignment and might also be updated frequently. You are allowed not to use this script but create your own code from the start. Of course, you could use Matlab as well as Python.
+
+NOTE: *, **, *** indicate the levels of difficulty of each problem, respectively. I hope you could solve most of the problems labeled as *. I encourage students choose **, and *** if they want to enhance mathematical aspects of machine learning. Note that you could earn 30 pts without any implementation of ML software :-).
+\end{itemize}
+
+\section*{Problem 1 (10pts)*}
+We consider a binary classification with a linear logistic regression. Let $x \in \mathbb R_d$, and $w \in \mathbb R_d$ be an d-dimensional input vector, and a parameter of the model, respectively. The classifier is represented by $f(x) = 2 [\![w^\top x]\!] > 0 - 1$, where $c$ denotes an indicator function that returns 1 if c is true, otherwise returns 0. With the supervised dataset ${\bm x_i, y_i}^n_{i=1}$, we consider an optimization problem for the logistic regression. The optimization problem can be written as
+\begin{align*}
+  \hat{\bm w} &=  \argmin_{\bm w} J(\bm w) \\
+  J(\bm w) &:= \sum_{i=1}^n (\ln (1+\exp(-y_i\bm w^\top \bm x_i))) + \lambda\bm w^\top\bm w.
+\end{align*}
+Here we assume that $\bm x_i$ contains constant value 1 to make the classifier adaptable to offset in $d − 1$ dimensional feature space. With some artificial dataset (see Toy Dataset section, Dataset IV), we consider to implement some optimization methods in the following way.
+
+\begin{enumerate}
+  \item Implement batch steepest gradient method$^1$.
+  \item Implement Newton based method.
+  \item Compare the performance of the above two optimization methods by showing $|J(\bm w^{(t)}) − J(\hat{\bm w})|$ w.r.t. $t$, where $\bm w^{(t)}$ represents the parameter at $t$-th iteration, and $\hat{\bm w}$ represent optimal parameter that reaches minimum of $J$ obtained by (either of) the two methods, in semi-log plot.
+  \item Implement Newton method and simple steepest gradient method for multiclass version of logistic regression (use Toy dataset V) and run the same experiment as binary logistic regression mentioned above.
+\end{enumerate}
+
+\section*{Problem 2 (5 pts)*}
+We consider lasso, where the square loss, and the L1 regularization are employed for linear regression. In this problem, we employ proximal gradient method (PG). So as to make the discussion simple, we use the following objective:
+$$ \hat{\bm w} = \argmin_{w} \left((\bm w-\bm\mu)\top \bm A(\bm w-\bm\mu)+\lambda||\bm w||_1\right). $$
+Implement PG for lasso and show the results in a couple of conditions. In this question, use the same learning rate $\eta_t = L_{−1}$, where $L$ depicts the Lipsitz constant of the gradient of the objective, which is derived from the Hessian matrix $2\bm A$ (i.e. use the maximum eigen value of $2\bm A$ as the inverse of the learning rate: $\eta_t^{-1}−1$).
+\begin{enumerate}
+  \item Show the result of PG in terms of $||\bm w^{(t)} − \hat{\bm w}||$ w.r.t. the number of iteration. Use semi log plot. Use the following condition:
+  $$A=\begin{pmatrix}
+  3& 0.5 \\
+  0.5& 1
+  \end{pmatrix}, \mu^\top=(1 2).$$
+\end{enumerate}
+To verify the property of L1 regularization, run the experiment with $\lambda = 2, 4, 6$. Recall that the numerical result can be found in the slide used in the lecture. You can also verify the result by using cvx (matlab) / cvxopt (python).
+
+\section*{Problem 3 (15 pts)*}
+We consider the dual of the support vector machine (L2-regularized hinge loss based binary classifier). The original optimization problem of this classification can be represented as
+\begin{align}
+  \hat{\bm w} = \argmax_{\bm w\in \mathbb R^d}\left(\sum_{i=1}^n\max(0, 1 − y_i\bm w^\top \bm x_i) + \lambda||\bm w||_2^2\right),
+\end{align}
+where $\bm x_i \in \mathbb R_d$, $\bm w \in \mathbb R_d$, $y_i \in {±1}$, and $\lambda > 0$ denotes $i$-th input variable, the parameter vector, and the label for $i$-th input data, and a coefficient of the regularization term, respectively.
+\begin{enumerate}
+  \item Verify that the dual Lagrange function of this optimization can be written as
+  \begin{align}
+    \nonumber
+    \mathrm{maximize}_{ \bm\alpha\in\mathbb R_n}&\ − \frac{1}{4\lambda} \bm\alpha^\top\bm K\bm\alpha + \bm\alpha^\top\bm 1,  \\
+    \mathrm{subject to}&\ \bm 0\le\bm\alpha\le\bm 1
+  \end{align}
+  where $\bm 1$and $\bm 0$ denote a n dimensional vector whose elements are all $\bm 1$ and $\bm 0$, respectively, and $K \in \mathbb R^{n×n}$ denotes a symmetric square matrix, and its $i$-th row and $j$-th column element can be represented by $y_iy_j\bm x_i^\top\bm x_j$.
+  \item From the KKT condition, verify the optimal weight parameter $\bm w$ given by $\alpha$ can be written as
+  \begin{align}
+    \hat{\bm w} = \frac{1}{2\lambda}\sum_{i=1}^n \alpha_iy_i\bm x_i
+  \end{align}
+  \item Implement minimization for the negative dual Lagrange function using projected gradient (for simplicity). For the validity, show the score of the dual Lagrange function (use (2)), and sum of hinge loss function and the regularization, w.r.t. number of iteration (use (1) and (3)), respectively. Confirm that the duality gap reaches 0 for the convergence. Here we assume projected gradient just computes
+  $$
+  \bm\alpha^{(t)} = P_{[0,1]^n} \left(\bm\alpha^{(t−1)} − \eta_t\left(\frac{1}{2\lambda}\bm K\bm\alpha^{(t−1)} − \bm 1\right)\right),
+  $$
+  where $\eta_t$ represents learning rate at $t$-th iteration, and $P_{[0,1]^n}$ depicts a projection operator that each of the input cast into $[0, 1]$.
+\end{enumerate}
+
+\section*{Problem 4 (10 pts)**}
+We consider a binary classification problem, where the hinge loss function, and L1 regularization are leveraged. Let $\bm x \in \mathbb R_d$ be an input, and $\bm w \in \mathbb R_d$ be a parameter of the model, respectively. We consider a binary discriminant function with linear regression as $f(x) = 2[\![w^\top x \ge 0]\!] − 1$, where $[\![c]\!]$ returns 1 when $c$ is true, otherwise it returns 0. With a supervised dataset ${\bm x_i , y_i }_{i=1}^n$ the learning problem can be formalized as
+
+\begin{align}
+  \hat{\bm w} = \argmax_{\bm w\in \mathbb R^d}(0, 1 − y_i\bm w^\top x_i) + \lambda||\bm w||_2^2,
+\end{align}
+where $y_i \in {\pm1}$ denotes a binary label for $i$-th training example.
+\begin{enumerate}
+  \item Derive a linear program from (4) (with auxiliary variable $\xi_i \ge \max(0, 1 − y_i\bm w^\top \bm x_i) \ge 0$, and $e_i \ge |\bm w_i| \ge 0$). Recall that linear program can be written as
+  \begin{align*}
+  \mathrm{minimize}&\ \bm c^\top \bm z \\
+  \mathrm{subject to}&\ \bm A\bm z \le \bm b
+  \end{align*}
+  (See LpBoost that deals with LP from L1-regularized hinge loss model)
+  \item By using some artificial dataset(seeToyDatasetsection,DatasetIV),implement this problem via cvx (in Matlab) / cvxopt (in python) (just for reference) and a (batch) proximal subgradient method. Then confirm that the parameter properly converges. The specification of the dataset should be described in the report.
+\end{enumerate}
+
+\section*{Problem 5 (10 pts + optional 5 pts)**}
+We consider a matrix optimization problem with the following objective:
+\begin{align*}
+  \argmin_{\bm Z\in\mathbb R^{x\times n}} \left( \sum_{i,j\notin Q} |Ai,j − Zi,j |2 + λ||\bm Z||_*\right)
+\end{align*}
+where $\bm A \in \mathbb R^{m\times n}$ represents data matrix (user vs. movie rating data in recommendation systems), and also contains null value on $Q$ denotes. $||・||_*$ represents a nuclear norm of the matrix, $\lambda > 0$ denotes a hyper parameter for the regularization. In this optimization problem, $\bm Z$ corresponds to the recovered data from the incomplete data matrix $\bm A$. In the scenario of the recommendation systems, the inferred $\bm Z$ at location $Q$ corresponds to the inferred score of movie rating.
+\begin{enumerate}
+  \item Describe the definition of the nuclear norm of a matrix by investigating it from www. In addition to its definition, define the proximal operation with the nuclear norm. (Hint: Use singular value decomposition.)
+  \item With some dataset (see Toy Dataset III), implement proximal gradient method for this machine learning problem and shows the recovered data $\bm Z$ by using surface plotting.
+  \item (Option: You can earn additional 5 pts) Implement non-negative matrix factorization as alternative approach to recover $\bm A$ and compare the performance by choosing the hyper parameters. Discuss the advantages and disadvantages of the two methods you implement here.
+\end{enumerate}
+
+\section*{Problem 6 (10 pts)***}
+We consider a gradient descent algorithm for minimizing $L$-Lipschitz convex function $f$. From the starting point $\bm w^{(0)} \in \mathbb R_d$, and at each iteration we update the parameter $\bm w$ as $\bm w^{(t+1)} \leftarrow \bm w^{(t)} − \eta \nabla f|_{\bm w=\bm w^{(t)}}$ (i.e. fixed step size gradient descent update). Finally we choose the optimum value
+$$
+\hat{\bm w} = \argmin_{\bm w^{(0)},\bm w^{(1)},\ldots,\bm w^{(n)},} \{f(\bm w^{(0)}),f(\bm w^{(1)}),\ldots,f(\bm w^{(T)})\}
+$$
+. We want to estimate the minimum number of iterations $T^*$, where $f(\hat{\bm w})−f(\bm w_*) \le \varepsilon$ holds when we set $\eta=\varepsilon/L^2$. Here we assume $\bm w^*$ be the optimum value to minimize function $f$. Please prove that such $T^*$ can be written as $O(1/\varepsilon^2)$.
+
+\section*{Problem 7 (10 pts)***}
+Similar to Problem 6, we consider a gradient descent algorithm for minimizing $\gamma$-smooth convex function $f$. From the starting point $\bm w^{(0)} \in \mathbb R_d$, and at each iteration we update the parameter $\bm w$ as $\bm w^{(t+1)} \leftarrow \bm w^{(t)} − \eta \nabla f|_{\bm w=\bm w^{(t)}}$ (i.e. fixed step size gradient descent update). Finally we choose the optimum value
+$$
+\hat{\bm w} = \argmin_{\bm w^{(0)},\bm w^{(1)},\ldots,\bm w^{(n)},} \{f(\bm w^{(0)}),f(\bm w^{(1)}),\ldots,f(\bm w^{(T)})\}
+$$
+. We want to estimate the minimum number of iterations $T^*$, where $f(\hat{\bm w})−f(\bm w_*) \le \varepsilon$ holds when we set $\eta = 1/\gamma$. Here we assume $\bm w^*$ be the optimum value to minimize function $f$. Please prove that such $T^*$ can be written as $O(1/\epsilon)$.
+
+\section*{Problem 8 (10pts)*}
+We consider linear regression and the effect of regularization. As shown in the lecture, the optimization of the linear regression also known as least square problem is defined as the following optimization problem:
+$$
+\hat{\bm w}_{LS} = \argmin_{\bm w} \frac{1}{2}||\bm y − \bm X\bm w||_2^2,
+$$
+where the design matrix, the response vector, and the parameter is represented by $\bm X \in \mathbb R^{n×d}$, $\bm y \in \mathbb R^n$，and $\bm w \in \mathbb R^d$, respectively (Review lecture slides and check the video if necessary). Though the regression through this optimization may work properly under some conditions; it is also known that this model is prone to overfitting. As a simple approach to tackle the overfitting issue, Ridge regularization is frequently employed in machine learning community. The resultant optimization problem is defined as follows:
+$$
+\hat{\bm w}_{ridge} = \argmin_{\bm w} \frac{1}{2}||\bm y − \bm X\bm w||_2^2 + \lambda||\bm w||_2^2.
+$$
+\begin{enumerate}
+  \item Obtain analytical solutions of $\hat{\bm w}_{LS}$, and $\hat{\bm w}_{ridge}$, respectively. Here we assume $\bm X^\top \bm X$ is regular, i.e. $(\bm X^\top \bm X)−1$ exists.
+  \item Even if $\bm X^\top \bm X$ is not regular, prove that $\bm X^\top \bm X + \lambda \bm I$ is regular. This means that the optimal parameter $\hat{\bm w}_{ridge}$ is always available whether $\bm X^\top \bm X$ is regular or not. Here $\bm I \in \mathbb R^{d×d}$ represents an identity matrix and $\lambda > 0$ denotes hyper parameter of the regularization.
+  \item Here we assume that $\bm X^\top \bm X$ is regular, prove that $||\bm X\hat{\bm w}_{LS}||_2^2 \ge ||\bm X\hat{\bm w}_{ridge}||_2^2$. This result is also known as shrinkage in machine learning. Explain situation(s) where the shrinkage works effectively in machine learning. 
+\end{enumerate}
+　
+\section*{Problem 9 (10 pts) **}
+\begin{enumerate}
+  \item We consider to minimize the maximum distance from $(x,y)$ to points $\{x_i,y_i\}^n_{i=1}$,i.e.
+  $$
+  \mathrm{minimize}_{x\in\mathbb R,y\in\mathbb R}\quad\mathrm{max}_i\sqrt{(x_i-x)^2+(y_i-y)^2}
+  $$
+  Convert this optimization problem into quadratic programming problem where quadratic function is used as objective function and linear equalities and inequalities are used in the constraints.
+  \item Convert the following optimization as convex optimization. Here we assume variable $x_1$, $x_2$, $x_3$ is real number, respectively. Hint: Please focus on the 4-th constraints and use other variables to represent $x_1$, $x_2$, $x_3$, respectively.
+  \begin{align}
+    \nonumber
+    \mathrm{minimize}_{x_1,x_2,x_3}&\ x_2/x_1 \\
+    \nonumber
+    \mathrm{subject\ to}&\ x_1^2+x_2/x_3 \le \sqrt x_2 \\
+    \nonumber
+    &\ x_1/x_2 = x_3^2 \\
+    \nonumber
+    &\ 2 \le x_1 \le3, \\
+    \nonumber
+    &\ x_1,x_2,x_3 >0 
+  \end{align}
+\end{enumerate}
+
+　　
+\end{document}
